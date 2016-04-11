@@ -7,13 +7,14 @@
       const String dName = "Proton";
       const String dNamel = htko.lowcap(dName);
       const int ON = 1; const int OFF = 0;
-      boolean first = true;
+      Timer initTimer(100, initHandler, true);
+      volatile boolean init = false;
     // Pin Constants - Match index for lights to button
       const int inputs[5] = {D6,A0,A1,D7,A4}; // 0 = DHT, 1&2 = Button, 3 = Door, 4 - IR Capture
       const int outputs[5] = {0,A2,A3,D2,A5}; // 0 = RGB, 1&2 = Lights, 3 = Garage Door, 4 - Null, IR LED (reverse with capture soon)
   // Controllers
     // Lights & Buttons
-      retained int outStates[3] = {OFF,OFF,ON}; // RGB, L1, L2. 0 to 2 (lights)
+      retained int outStates[4] = {OFF,OFF,ON}; // RGB, L1, L2. 0 to 2 (lights)
       int newStates[4]; // 1 to 3 (buttons)
       int oldStates[4]; // including zero index
     // DHT
@@ -27,7 +28,7 @@
       IRsend IRsend(outputs[4]);
   // Timers and Handlers
     // DHT
-      Timer dhtUseTimer(2100, dhtUseTimerHandler, true);
+      Timer dhtUseTimer(2500, dhtUseTimerHandler, true);
       Timer dhtTimer(60000, dhtTimerHandler, false);
       volatile boolean inUseDht = false;
     // Light
@@ -66,13 +67,13 @@
           digitalWrite(outputs[3], OFF);
       // Final Initialization
         // Event
-          delay(5000);
-          Particle.publish(dName, "Status: Loop. Cloud Func: "+htko.strBool2(regCloudFunc)+", Light Timer: "+htko.cap(htko.strBool(lightsExpire))+", Memory: "+String(System.freeMemory())+" Bytes", 60, PRIVATE);
+          delay(2500);
+          initTimer.start();
+          Particle.publish(dName, "Status: Loop. Cloud Func: "+htko.strBool2(regCloudFunc)+", Light Timer: "+htko.cap(htko.strBool(lightsExpire)), 60, PRIVATE);
     }
   // Loop
     void loop(){
       btnHandler();
-      loopHandler();
     }
 
 // Output / Action Control
@@ -160,6 +161,10 @@
         }else{
           Particle.publish(dName, status, 60, PRIVATE);
         }
+        int freemem = System.freeMemory();
+        if( freemem<10000 ){
+          Particle.publish(dName, "Memory Low Alert! Memory: "+String(freemem)+" Bytes.", 60, PRIVATE);
+        }
       }
     }
   // IR
@@ -234,7 +239,7 @@
         if( feedback ){
           status = ", Status: "+htko.cap(status);
           trigger = " "+user+"."+device;
-          Particle.publish(dName, "Command "+htko.strBool2(result)+": "+command+trigger+status+", Memory: "+String(System.freeMemory())+" Bytes", 60, PRIVATE);
+          Particle.publish(dName, "Command "+htko.strBool2(result)+": "+command+trigger+status, 60, PRIVATE);
           flashCtrl("white",25);
         }
       // Return
@@ -247,8 +252,9 @@
       uint32_t freemem = System.freeMemory();
       Particle.publish(dName, "Status: Reset. Memory: "+String(freemem)+" Bytes", 60, PRIVATE);
     }
-    void loopHandler(){ // Toggle pins 1
-      first = false;
+    void initHandler(){ // Toggle pins 1
+      init = true;
+      Particle.publish(dName, "Status: Init. Memory: "+String(System.freeMemory())+" Bytes", 60, PRIVATE);
     }
   // Buttons
     void btnHandler(){
@@ -256,18 +262,16 @@
         oldStates[i] = newStates[i];
         newStates[i] = digitalRead(inputs[i]);
       }
-      if( !first ){
-        if( newStates[1]>=oldStates[1] ){
-          //cmdParse("light.toggle.1","button",dNamel,true);
-          delay(200);
+      Particle.process();
+      if( init ){
+        if( newStates[1]>oldStates[1] ){
+          cmdParse("light.toggle.1","button",dNamel,true);
         }
-        if( newStates[2]>=oldStates[2] ){
-          //cmdParse("light.toggle.2","button",dNamel,true);
-          delay(200);
+        if( newStates[2]>oldStates[2] ){
+          cmdParse("light.toggle.2","button",dNamel,true);
         }
         if( newStates[3]!=oldStates[3] ){
-          //cmdParse("light.toggle.1","door",dNamel,true);
-          delay(200);
+          cmdParse("light.toggle.1","door",dNamel,true);
         }
       }
     }
