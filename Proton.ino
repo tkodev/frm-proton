@@ -7,15 +7,15 @@
       const String dName = "Proton";
       const String dNamel = htko.lowcap(dName);
       const int ON = 1; const int OFF = 0;
-      boolean debug = false;
+      boolean first = true;
     // Pin Constants - Match index for lights to button
-      const int inputs[5] = {D5,A0,A1,D7,A4}; // 0 = DHT, 1&2 = Button, 3 = Door, 4 - IR Capture
+      const int inputs[5] = {D6,A0,A1,D7,A4}; // 0 = DHT, 1&2 = Button, 3 = Door, 4 - IR Capture
       const int outputs[5] = {0,A2,A3,D2,A5}; // 0 = RGB, 1&2 = Lights, 3 = Garage Door, 4 - Null, IR LED (reverse with capture soon)
   // Controllers
     // Lights & Buttons
-      retained int outStates[3] = {OFF,OFF,ON}; // RGB, L1, L2
-      int newStates[3]; // including zero index
-      int oldStates[3]; // including zero index
+      retained int outStates[3] = {OFF,OFF,ON}; // RGB, L1, L2. 0 to 2 (lights)
+      int newStates[4]; // 1 to 3 (buttons)
+      int oldStates[4]; // including zero index
     // DHT
       #include "PietteTech_DHT.h"
       void dht_wrapper(); // must be declared before the lib initialization
@@ -63,15 +63,16 @@
           cmdParse("light."+htko.strDigit(outStates[0])+".0","setup",dNamel,false);
           cmdParse("light."+htko.strDigit(outStates[1])+".1","setup",dNamel,false);
           cmdParse("light."+htko.strDigit(outStates[2])+".2","setup",dNamel,false);
-        // Delay
-          delay(1000);
+          digitalWrite(outputs[3], OFF);
       // Final Initialization
         // Event
+          delay(5000);
           Particle.publish(dName, "Status: Loop. Cloud Func: "+htko.strBool2(regCloudFunc)+", Light Timer: "+htko.cap(htko.strBool(lightsExpire))+", Memory: "+String(System.freeMemory())+" Bytes", 60, PRIVATE);
     }
   // Loop
     void loop(){
       btnHandler();
+      loopHandler();
     }
 
 // Output / Action Control
@@ -134,8 +135,7 @@
     }
   // DHT
     void dhtReport(){
-      if( !inUseDht ){
-        inUseDht = true;
+      if( dhtExpired() ){
         int result = DHT.acquireAndWait(0);
         String status = DHT.resultStr(result);
         if( status=="OK" ){
@@ -146,11 +146,9 @@
           Particle.publish(dName, status, 60, PRIVATE);
         }
       }
-      dhtUseTimer.start();
     }
     void dhtReportOverheat(){
-      if( !inUseDht ){
-        inUseDht = true;
+      if( dhtExpired() ){
         int result = DHT.acquireAndWait(0);
         String status = DHT.resultStr(result);
         if( status=="OK" ){
@@ -163,7 +161,6 @@
           Particle.publish(dName, status, 60, PRIVATE);
         }
       }
-      dhtUseTimer.start();
     }
   // IR
     void irflashCtrl(){
@@ -250,7 +247,52 @@
       uint32_t freemem = System.freeMemory();
       Particle.publish(dName, "Status: Reset. Memory: "+String(freemem)+" Bytes", 60, PRIVATE);
     }
+    void loopHandler(){ // Toggle pins 1
+      first = false;
+    }
+  // Buttons
+    void btnHandler(){
+      for (int i=1; i <= 3; i++){
+        oldStates[i] = newStates[i];
+        newStates[i] = digitalRead(inputs[i]);
+      }
+      if( !first ){
+        if( newStates[1]>=oldStates[1] ){
+          //cmdParse("light.toggle.1","button",dNamel,true);
+          delay(200);
+        }
+        if( newStates[2]>=oldStates[2] ){
+          //cmdParse("light.toggle.2","button",dNamel,true);
+          delay(200);
+        }
+        if( newStates[3]!=oldStates[3] ){
+          //cmdParse("light.toggle.1","door",dNamel,true);
+          delay(200);
+        }
+      }
+    }
+  // Cloud Event / Function
+    int cloudFuncHandler(String cloudData){ // must return Int and take a 63 character max String argument
+      // Convert Data
+        cloudData = cloudData.replace("%20", " ");
+        int index1 = cloudData.indexOf(' ');
+        String command = cloudData.substring(0, index1);
+        String user = cloudData.substring(index1+1);
+      // Send to Command
+        boolean result = cmdParse(command,user,"cloud",true);
+      // Return
+        return result;
+    }
   // DHT Timers
+    boolean dhtExpired(){ // Checks for button use.
+      dhtUseTimer.start();
+      if( inUseDht ){
+        return false;
+      }else{
+        inUseDht = true;
+        return true;
+      }
+    }
     void dhtUseTimerHandler(){
       inUseDht = false;
     }
@@ -265,32 +307,4 @@
     }
     void lightTimerHandler(){
       cmdParse("light.off.all","timer",dNamel,true);
-    }
-  // Door
-    void btnHandler(){
-      for (int i=1; i <= 3; i++){
-        oldStates[i] = newStates[i];
-        newStates[i] = digitalRead(inputs[i]);
-      }
-      if( newStates[1]>=oldStates[1] ){
-        cmdParse("light.toggle.1","button",dNamel,false);
-      }
-      if( newStates[2]>=oldStates[2] ){
-        cmdParse("light.toggle.2","button",dNamel,false);
-      }
-      if( newStates[3]!=oldStates[3] ){
-        cmdParse("light.toggle.1","door",dNamel,true);
-      }
-    }
-  // Cloud Event / Function
-    int cloudFuncHandler(String cloudData){ // must return Int and take a 63 character max String argument
-      // Convert Data
-        cloudData = cloudData.replace("%20", " ");
-        int index1 = cloudData.indexOf(' ');
-        String command = cloudData.substring(0, index1);
-        String user = cloudData.substring(index1+1);
-      // Send to Command
-        boolean result = cmdParse(command,user,"cloud",true);
-      // Return
-        return result;
     }
