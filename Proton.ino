@@ -29,7 +29,7 @@
   // Timers and Handlers
     // DHT
       Timer dhtUseTimer(2500, dhtUseTimerHandler, true);
-      Timer dhtTimer(60000, dhtTimerHandler, false);
+      Timer dhtDaemonTimer(60000, dhtDaemon, false);
       volatile boolean inUseDht = false;
     // Light
       Timer lightTimer(1800000, lightTimerHandler, true);
@@ -56,7 +56,7 @@
           pinMode(outputs[3], OUTPUT); // Garage
           pinMode(outputs[4], OUTPUT); // IR LED
       // Handlers
-          dhtTimer.start();
+          dhtDaemonTimer.start();
         // Cloud
           boolean regCloudFunc = Particle.function("cloudFunc", cloudFuncHandler);
       // Initial Commands
@@ -145,25 +145,6 @@
           Particle.publish(dName, "Status: "+String(temp)+"°C, "+String(humid)+"%", 60, PRIVATE);
         }else{
           Particle.publish(dName, status, 60, PRIVATE);
-        }
-      }
-    }
-    void dhtReportOverheat(){
-      if( dhtExpired() ){
-        int result = DHT.acquireAndWait(0);
-        String status = DHT.resultStr(result);
-        if( status=="OK" ){
-          int temp = DHT.getCelsius();
-          int humid = DHT.getHumidity();
-          if( temp>=maxTemp ){
-            Particle.publish(dName, "Overheating Alert! Status: "+String(temp)+"°C, "+String(humid)+"%", 60, PRIVATE);
-          }
-        }else{
-          Particle.publish(dName, status, 60, PRIVATE);
-        }
-        int freemem = System.freeMemory();
-        if( freemem<10000 ){
-          Particle.publish(dName, "Memory Low Alert! Memory: "+String(freemem)+" Bytes.", 60, PRIVATE);
         }
       }
     }
@@ -288,6 +269,25 @@
         return result;
     }
   // DHT Timers
+    void dhtDaemon(){
+      if( dhtExpired() ){
+        int result = DHT.acquireAndWait(0);
+        String status = DHT.resultStr(result);
+        if( status=="OK" ){
+          int temp = DHT.getCelsius();
+          int humid = DHT.getHumidity();
+          if( temp>=maxTemp ){
+            Particle.publish(dName, "Overheating Alert! Status: "+String(temp)+"°C, "+String(humid)+"%", 60, PRIVATE);
+          }
+        }else{
+          Particle.publish(dName, status, 60, PRIVATE);
+        }
+        int freemem = System.freeMemory();
+        if( freemem<10000 ){
+          Particle.publish(dName, "Memory Low Alert! Memory: "+String(freemem)+" Bytes.", 60, PRIVATE);
+        }
+      }
+    }
     boolean dhtExpired(){ // Checks for button use.
       dhtUseTimer.start();
       if( inUseDht ){
@@ -299,9 +299,6 @@
     }
     void dhtUseTimerHandler(){
       inUseDht = false;
-    }
-    void dhtTimerHandler(){
-      dhtReportOverheat();
     }
   // Light Timer
     void lightTimerCtrl(){
