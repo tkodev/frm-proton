@@ -7,14 +7,16 @@
       const String dName = "Proton";
       const String dNamel = htko.lowcap(dName);
       const int ON = 1; const int OFF = 0;
-      boolean debug = false;
+      Timer initTimer(100, initHandler, true);
+      volatile boolean init = false;
     // Pin Constants - Match index for lights to button
-      const int inputs[5] = {D5,A0,A1,D7,A4}; // 0 = DHT, 1&2 = Button, 3 = Door, 4 - IR Capture
+      const int inputs[5] = {D6,A0,A1,D7,A4}; // 0 = DHT, 1&2 = Button, 3 = Door, 4 - IR Capture
       const int outputs[5] = {0,A2,A3,D2,A5}; // 0 = RGB, 1&2 = Lights, 3 = Garage Door, 4 - Null, IR LED (reverse with capture soon)
   // Controllers
     // Lights & Buttons
-      retained int outStates[5] = {OFF,OFF,ON,OFF,OFF}; // RGB, L1, L2
-      int doorState[3]; // including zero index
+      retained int outStates[4] = {OFF,OFF,ON}; // RGB, L1, L2. 0 to 2 (lights)
+      int newStates[4]; // 1 to 3 (buttons)
+      int oldStates[4]; // including zero index
     // DHT
       #include "PietteTech_DHT.h"
       void dht_wrapper(); // must be declared before the lib initialization
@@ -24,15 +26,10 @@
     // IR
       #include "IRremote.h"
       IRsend IRsend(outputs[4]);
-  // ISR, Timers and Handlers
-    // ISR Real Time conversion
-      volatile boolean isrFunc[5] = {false, false, false, false, false}; // including zero index. 0 = door, 1&2 = btn
-    // Button
-      Timer isrUseTimer(500, isrUseTimerHandler, true);
-      volatile boolean inUseISR1 = false;
+  // Timers and Handlers
     // DHT
-      Timer dhtUseTimer(2100, dhtUseTimerHandler, true);
-      Timer dhtTimer(60000, dhtTimerHandler, false);
+      Timer dhtUseTimer(2500, dhtUseTimerHandler, true);
+      Timer dhtDaemonTimer(60000, dhtDaemon, false);
       volatile boolean inUseDht = false;
     // Light
       Timer lightTimer(1800000, lightTimerHandler, true);
@@ -59,11 +56,7 @@
           pinMode(outputs[3], OUTPUT); // Garage
           pinMode(outputs[4], OUTPUT); // IR LED
       // Handlers
-        // ISR & Timers
-          attachInterrupt(inputs[1], isrBtn1Handler, RISING);
-          attachInterrupt(inputs[2], isrBtn2Handler, RISING);
-          //attachInterrupt(inputs[3], isrBtn3Handler, CHANGE);
-          dhtTimer.start();
+          dhtDaemonTimer.start();
         // Cloud
           boolean regCloudFunc = Particle.function("cloudFunc", cloudFuncHandler);
       // Initial Commands
@@ -71,16 +64,16 @@
           cmdParse("light."+htko.strDigit(outStates[0])+".0","setup",dNamel,false);
           cmdParse("light."+htko.strDigit(outStates[1])+".1","setup",dNamel,false);
           cmdParse("light."+htko.strDigit(outStates[2])+".2","setup",dNamel,false);
-        // Delay
-          delay(1000);
+          digitalWrite(outputs[3], OFF);
       // Final Initialization
         // Event
-          Particle.publish(dName, "Status: Loop. Cloud Func: "+htko.strBool2(regCloudFunc)+", Light Timer: "+htko.cap(htko.strBool(lightsExpire))+", Memory: "+String(System.freeMemory())+" Bytes", 60, PRIVATE);
+          delay(2500);
+          initTimer.start();
+          Particle.publish(dName, "Status: Loop. Cloud Func: "+htko.strBool2(regCloudFunc)+", Light Timer: "+htko.cap(htko.strBool(lightsExpire)), 60, PRIVATE);
     }
   // Loop
     void loop(){
-      isrRTConvert();
-      //doorHandler();
+      btnHandler();
     }
 
 // Output / Action Control
@@ -143,8 +136,7 @@
     }
   // DHT
     void dhtReport(){
-      if( !inUseDht ){
-        inUseDht = true;
+      if( dhtExpired() ){
         int result = DHT.acquireAndWait(0);
         String status = DHT.resultStr(result);
         if( status=="OK" ){
@@ -155,24 +147,6 @@
           Particle.publish(dName, status, 60, PRIVATE);
         }
       }
-      dhtUseTimer.start();
-    }
-    void dhtReportOverheat(){
-      if( !inUseDht ){
-        inUseDht = true;
-        int result = DHT.acquireAndWait(0);
-        String status = DHT.resultStr(result);
-        if( status=="OK" ){
-          int temp = DHT.getCelsius();
-          int humid = DHT.getHumidity();
-          if( temp>=maxTemp ){
-            Particle.publish(dName, "Overheating Alert! Status: "+String(temp)+"°C, "+String(humid)+"%", 60, PRIVATE);
-          }
-        }else{
-          Particle.publish(dName, status, 60, PRIVATE);
-        }
-      }
-      dhtUseTimer.start();
     }
   // IR
     void irflashCtrl(){
@@ -246,7 +220,7 @@
         if( feedback ){
           status = ", Status: "+htko.cap(status);
           trigger = " "+user+"."+device;
-          Particle.publish(dName, "Command "+htko.strBool2(result)+": "+command+trigger+status+", Memory: "+String(System.freeMemory())+" Bytes", 60, PRIVATE);
+          Particle.publish(dName, "Command "+htko.strBool2(result)+": "+command+trigger+status, 60, PRIVATE);
           flashCtrl("white",25);
         }
       // Return
@@ -259,69 +233,27 @@
       uint32_t freemem = System.freeMemory();
       Particle.publish(dName, "Status: Reset. Memory: "+String(freemem)+" Bytes", 60, PRIVATE);
     }
-  // Button ISR & Timer
-    boolean isrExpired(){ // Checks for button use.
-      isrUseTimer.startFromISR();
-      if( !inUseISR ){
-        inUseISR = true;
-        return true;
+    void initHandler(){ // Toggle pins 1
+      init = true;
+      Particle.publish(dName, "Status: Init. Memory: "+String(System.freeMemory())+" Bytes", 60, PRIVATE);
+    }
+  // Buttons
+    void btnHandler(){
+      for (int i=1; i <= 3; i++){
+        oldStates[i] = newStates[i];
+        newStates[i] = digitalRead(inputs[i]);
       }
-      return false;
-    }
-    void isrUseTimerHandler(){
-      inUseISR = false;
-    }
-    void isrBtn1Handler(){ // Toggle light 1
-      if( isrExpired() ){ // has use timer Expired?
-        isrFunc[1] = true;
-      }
-    }
-    void isrBtn2Handler(){ // Toggle light 2
-      if( isrExpired() ){ // has use timer Expired?
-        isrFunc[2] = true;
-      }
-    }
-    void isrBtn3Handler(){ // Toggle light 1 - Door ISR currently disabled
-      if( isrExpired() ){ // has use timer Expired?
-        isrFunc[3] = true;
-      }
-    }
-    void isrRTConvert(){
-      if( isrFunc[1] ){ // Lights
-        cmdParse("light.toggle.1","button",dNamel,false);
-      }
-      if( isrFunc[2] ){ // Lights
-        cmdParse("light.toggle.2","button",dNamel,false);
-      }
-      if( isrFunc[3] ){ // Door
-        cmdParse("light.toggle.1","door",dNamel,false);
-      }
-      isrFunc[1] = false;
-      isrFunc[2] = false;
-      isrFunc[3] = false;
-    }
-  // DHT Timers
-    void dhtUseTimerHandler(){
-      inUseDht = false;
-    }
-    void dhtTimerHandler(){
-      dhtReportOverheat();
-    }
-  // Light Timer
-    void lightTimerCtrl(){
-      if( lightsExpire ){
-        lightTimer.start();
-      }
-    }
-    void lightTimerHandler(){
-      cmdParse("light.off.all","timer",dNamel,true);
-    }
-  // Door
-    void doorHandler(){
-      doorState[1] = doorState[2];
-      doorState[2] = digitalRead(inputs[0]);
-      if( doorState[2]!=doorState[1] ){
-        cmdParse("light.toggle.1","door",dNamel,true);
+      Particle.process();
+      if( init ){
+        if( newStates[1]>oldStates[1] ){
+          cmdParse("light.toggle.1","button",dNamel,true);
+        }
+        if( newStates[2]>oldStates[2] ){
+          cmdParse("light.toggle.2","button",dNamel,true);
+        }
+        if( newStates[3]!=oldStates[3] ){
+          cmdParse("light.toggle.1","door",dNamel,true);
+        }
       }
     }
   // Cloud Event / Function
@@ -335,4 +267,45 @@
         boolean result = cmdParse(command,user,"cloud",true);
       // Return
         return result;
+    }
+  // DHT Timers
+    void dhtDaemon(){
+      if( dhtExpired() ){
+        int result = DHT.acquireAndWait(0);
+        String status = DHT.resultStr(result);
+        if( status=="OK" ){
+          int temp = DHT.getCelsius();
+          int humid = DHT.getHumidity();
+          if( temp>=maxTemp ){
+            Particle.publish(dName, "Overheating Alert! Status: "+String(temp)+"°C, "+String(humid)+"%", 60, PRIVATE);
+          }
+        }else{
+          Particle.publish(dName, status, 60, PRIVATE);
+        }
+        int freemem = System.freeMemory();
+        if( freemem<10000 ){
+          Particle.publish(dName, "Memory Low Alert! Memory: "+String(freemem)+" Bytes.", 60, PRIVATE);
+        }
+      }
+    }
+    boolean dhtExpired(){ // Checks for button use.
+      dhtUseTimer.start();
+      if( inUseDht ){
+        return false;
+      }else{
+        inUseDht = true;
+        return true;
+      }
+    }
+    void dhtUseTimerHandler(){
+      inUseDht = false;
+    }
+  // Light Timer
+    void lightTimerCtrl(){
+      if( lightsExpire ){
+        lightTimer.start();
+      }
+    }
+    void lightTimerHandler(){
+      cmdParse("light.off.all","timer",dNamel,true);
     }
