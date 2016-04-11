@@ -13,8 +13,9 @@
       const int outputs[5] = {0,A2,A3,D2,A5}; // 0 = RGB, 1&2 = Lights, 3 = Garage Door, 4 - Null, IR LED (reverse with capture soon)
   // Controllers
     // Lights & Buttons
-      retained int outStates[5] = {OFF,OFF,ON,OFF,OFF}; // RGB, L1, L2
-      int doorState[3]; // including zero index
+      retained int outStates[3] = {OFF,OFF,ON}; // RGB, L1, L2
+      int newStates[3]; // including zero index
+      int oldStates[3]; // including zero index
     // DHT
       #include "PietteTech_DHT.h"
       void dht_wrapper(); // must be declared before the lib initialization
@@ -24,12 +25,7 @@
     // IR
       #include "IRremote.h"
       IRsend IRsend(outputs[4]);
-  // ISR, Timers and Handlers
-    // ISR Real Time conversion
-      volatile boolean isrFunc[5] = {false, false, false, false, false}; // including zero index. 0 = door, 1&2 = btn
-    // Button
-      Timer isrUseTimer(500, isrUseTimerHandler, true);
-      volatile boolean inUseISR1 = false;
+  // Timers and Handlers
     // DHT
       Timer dhtUseTimer(2100, dhtUseTimerHandler, true);
       Timer dhtTimer(60000, dhtTimerHandler, false);
@@ -59,10 +55,6 @@
           pinMode(outputs[3], OUTPUT); // Garage
           pinMode(outputs[4], OUTPUT); // IR LED
       // Handlers
-        // ISR & Timers
-          attachInterrupt(inputs[1], isrBtn1Handler, RISING);
-          attachInterrupt(inputs[2], isrBtn2Handler, RISING);
-          //attachInterrupt(inputs[3], isrBtn3Handler, CHANGE);
           dhtTimer.start();
         // Cloud
           boolean regCloudFunc = Particle.function("cloudFunc", cloudFuncHandler);
@@ -79,8 +71,7 @@
     }
   // Loop
     void loop(){
-      isrRTConvert();
-      //doorHandler();
+      btnHandler();
     }
 
 // Output / Action Control
@@ -259,47 +250,6 @@
       uint32_t freemem = System.freeMemory();
       Particle.publish(dName, "Status: Reset. Memory: "+String(freemem)+" Bytes", 60, PRIVATE);
     }
-  // Button ISR & Timer
-    boolean isrExpired(){ // Checks for button use.
-      isrUseTimer.startFromISR();
-      if( !inUseISR ){
-        inUseISR = true;
-        return true;
-      }
-      return false;
-    }
-    void isrUseTimerHandler(){
-      inUseISR = false;
-    }
-    void isrBtn1Handler(){ // Toggle light 1
-      if( isrExpired() ){ // has use timer Expired?
-        isrFunc[1] = true;
-      }
-    }
-    void isrBtn2Handler(){ // Toggle light 2
-      if( isrExpired() ){ // has use timer Expired?
-        isrFunc[2] = true;
-      }
-    }
-    void isrBtn3Handler(){ // Toggle light 1 - Door ISR currently disabled
-      if( isrExpired() ){ // has use timer Expired?
-        isrFunc[3] = true;
-      }
-    }
-    void isrRTConvert(){
-      if( isrFunc[1] ){ // Lights
-        cmdParse("light.toggle.1","button",dNamel,false);
-      }
-      if( isrFunc[2] ){ // Lights
-        cmdParse("light.toggle.2","button",dNamel,false);
-      }
-      if( isrFunc[3] ){ // Door
-        cmdParse("light.toggle.1","door",dNamel,false);
-      }
-      isrFunc[1] = false;
-      isrFunc[2] = false;
-      isrFunc[3] = false;
-    }
   // DHT Timers
     void dhtUseTimerHandler(){
       inUseDht = false;
@@ -317,10 +267,18 @@
       cmdParse("light.off.all","timer",dNamel,true);
     }
   // Door
-    void doorHandler(){
-      doorState[1] = doorState[2];
-      doorState[2] = digitalRead(inputs[0]);
-      if( doorState[2]!=doorState[1] ){
+    void btnHandler(){
+      for (int i=1; i <= 3; i++){
+        oldStates[i] = newStates[i];
+        newStates[i] = digitalRead(inputs[i]);
+      }
+      if( newStates[1]>=oldStates[1] ){
+        cmdParse("light.toggle.1","button",dNamel,false);
+      }
+      if( newStates[2]>=oldStates[2] ){
+        cmdParse("light.toggle.2","button",dNamel,false);
+      }
+      if( newStates[3]!=oldStates[3] ){
         cmdParse("light.toggle.1","door",dNamel,true);
       }
     }
