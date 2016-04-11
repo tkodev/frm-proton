@@ -1,5 +1,5 @@
 # Proton
-"Proton" is a smart in wall light switch / temp sensor / IR blaster. Based on the Particle Photon (cloud arduino device).
+"Proton" is a smart in wall light switch / temp sensor / door sensor / IR blaster / garage door opener. Based on the Particle Photon (cloud arduino device).
 
 Uses Spark-Core-IRremote: https://github.com/qwertzguy/Spark-Core-IRremote.git which is modified from Arduino-IRremote: https://github.com/z3t0/Arduino-IRremote.git
 Uses PietteTech_DHT: https://github.com/piettetech/PietteTech_DHT.git
