@@ -12,13 +12,10 @@
  * Based on adaptation by niesteszeck (github/niesteszeck)
  * Based on original DHT11 library (http://playgroudn.adruino.cc/Main/DHT11Lib)
  *
- *
  * This library supports the DHT sensor on the following pins
  * D0, D1, D2, D3, D4, A0, A1, A3, A5, A6, A7
  * http://docs.spark.io/firmware/#interrupts-attachinterrupt
- *
  */
-
 /*
     Timing of DHT22 SDA signal line after MCU pulls low for 1ms
     https://github.com/mtnscott/Spark_DHT/AM2302.pdf

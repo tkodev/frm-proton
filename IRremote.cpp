@@ -1,14 +1,13 @@
 /*
- * IRremote Version 0.11 August, 2009
+ * IRremote
+ * Version 0.11 August, 2009
+ * Copyright 2009 Ken Shirriff
  * For details, see http://arcfn.com/2009/08/multi-protocol-infrared-remote-library.html
- *
  * Modified by Paul Stoffregen <paul@pjrc.com> to support other boards and timers
- * Modified by Mitra Ardron <mitra@mitra.biz>
+ * Modified  by Mitra Ardron <mitra@mitra.biz>
  * Added Sanyo and Mitsubishi controllers
  * Modified Sony to spot the repeat codes that some Sony's send
  * Modified by Gaspard van Koningsveld to trim out IRrecv, not using PWM anymore, allow setting of IR LED pin, and make it compatible with the Spark Core v1.0 (STM32F103CB based)
- * https://github.com/qwertzguy/Spark-Core-IRremote/wiki/Help
- *
  * Interrupt code based on NECIRrcv by Joe Knapp
  * http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1210243556
  * Also influenced by http://zovirl.com/2008/11/12/building-a-universal-remote-with-an-arduino/
