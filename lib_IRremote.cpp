@@ -14,7 +14,7 @@
  * JVC and Panasonic protocol added by Kristian Lauszus (Thanks to zenwheel and other people at the original blog post)
  */
 
-#include "IRremote.h"
+#include "lib_IRremote.h"
 #include "application.h"
 
 IRsend::IRsend(int irPins) : irPin(irPin) {
