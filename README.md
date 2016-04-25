@@ -19,6 +19,7 @@ Provide fritzing / wiring diagrams.
 Provide pictures of finished product.
 
 # Credit
+Website: http://www.htko.ca/portfolio_page/proton-smart-light-switch/
 Uses Spark-Core-IRremote: https://github.com/qwertzguy/Spark-Core-IRremote.git
 which is modified from Arduino-IRremote: https://github.com/z3t0/Arduino-IRremote.git
 Uses PietteTech_DHT: https://github.com/piettetech/PietteTech_DHT.git
