@@ -6,10 +6,11 @@
 - All pins are defined in inputs[5] and outputs[5].
 
 # Cloud Handler
-- cloudFunc is a registered cloud function handler that takes a string in the format of "command.action.device user". 
+- cloudFunc is a "Particle Cloud" function handler that takes a string in the format of "command.action.device user". 
 - The user designation is used to tell what the Proton should report (in event logs) as the trigger user of the command. 
 - EX: using the particle cloud API: send a string "light.toggle.1 mobile-phone" to cloudFunc will toggle light on output[1].
 - cloudFunc event handler passes the string to cmdParse which does the real work.
+- see Particle Cloud documentation: https://docs.particle.io/reference/firmware/photon/#particle-publish-
 
 # Event Handlers
 - Events include timer events, door opened events, temp events, etc. all of which passes the string to cmdParse, much like cloudFunc above.
