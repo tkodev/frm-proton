@@ -2,7 +2,7 @@
 [![ScreenShot](http://www.htko.ca/wp-content/uploads/2016/04/Youtube-button.png)](https://youtu.be/7FFnYyeRKBw)
 - "Proton" is a smart in wall light switch / temp sensor / door sensor / IR blaster / garage door opener. Based on the Particle Photon (cloud arduino device).
 - The project is split into three sections:
-- Event handlers, Command Parser, and Action functions.
+- Cloud & Event handlers, Command Parser, and Action functions.
 - All pins are defined in inputs[5] and outputs[5].
 
 # Cloud Handler
