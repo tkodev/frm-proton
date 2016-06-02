@@ -2,7 +2,7 @@
 
 [![ScreenShot](http://www.htko.ca/wp-content/uploads/2016/04/Youtube-button.png)](https://youtu.be/7FFnYyeRKBw)
 
-# "Proton" is a smart in wall light switch / temp sensor / door sensor / IR blaster / garage door opener. Based on the Particle Photon (cloud arduino device).
+"Proton" is a smart in wall light switch / temp sensor / door sensor / IR blaster / garage door opener. Based on the Particle Photon (cloud arduino device).
 - The project is split into three sections:
 - Event handlers, Command Parser, and Action functions.
 - All pins are defined in inputs[5] and outputs[5].
@@ -12,7 +12,7 @@
 - The user designation is used to tell what the Proton should report (in event logs) as the trigger user of the command. 
 - EX: using the particle cloud API: send a string "light.toggle.1 mobile-phone" to cloudFunc will toggle light on output[1].
 - cloudFunc event handler passes the string to cmdParse which does the real work.
-- 
+
 # Event Handlers
 - Events include timer events, door opened events, temp events, etc. all of which passes the string to cmdParse, much like cloudFunc above.
 - EX: "garage.door.1 garage-timer"
