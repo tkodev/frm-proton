@@ -1,4 +1,4 @@
-# Media
+# Proton Smart Light Switch
 
 [![ScreenShot](http://www.htko.ca/wp-content/uploads/2016/04/Youtube-button.png)](https://youtu.be/7FFnYyeRKBw)
 
