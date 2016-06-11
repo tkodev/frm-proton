@@ -31,10 +31,8 @@
       Timer dhtUseTimer(2500, dhtUseTimerHandler, true);
       Timer dhtDaemonTimer(60000, dhtDaemon, false);
       volatile boolean inUseDht = false;
-      volatile int dhtErrors = 0;
     // Light
-      Timer lightTimer1(900000, lightTimerHandler, true);
-      Timer lightTimer2(14400000, lightTimerHandler, true);
+      Timer lightTimer(900000, lightTimerHandler, true);
       volatile boolean lightsExpire = true;
   // Notes
     // Drill Hole for IR
@@ -88,6 +86,9 @@
           outStates[i] = cmd;
         }
         digitalWrite(outputs[i], !outStates[i]);
+        if( outStates[i]==ON ){
+          lightTimerCtrl();
+        }
       }
     }
     void rgbCtrl(int cmd){
@@ -144,7 +145,6 @@
           Particle.publish(dName, "Status: "+String(temp)+"°C, "+String(humid)+"%", 60, PRIVATE);
         }else{
           Particle.publish(dName, status, 60, PRIVATE);
-          dhtErrorCheck();
         }
       }
     }
@@ -183,11 +183,6 @@
       // Parse Command
         if( cmd1==1 ){ // Lights
           if( (cmd2==0)||(cmd2==1)||(cmd2==2) ){ // Command Selection
-            if( device==dNamel ){
-              lightTimer1Ctrl();
-            }else{
-              lightTimer2Ctrl();
-            }
             if( (cmd3==0) ){ // Light Selection - RGB
               rgbCtrl(cmd2);
               result = true; status = htko.strDigit(cmd2);
@@ -286,18 +281,11 @@
           }
         }else{
           Particle.publish(dName, status, 60, PRIVATE);
-          dhtErrorCheck();
         }
         int freemem = System.freeMemory();
         if( freemem<10000 ){
           Particle.publish(dName, "Memory Low Alert! Memory: "+String(freemem)+" Bytes.", 60, PRIVATE);
         }
-      }
-    }
-    void dhtErrorCheck(){ // Checks for button use.
-      dhtErrors++;
-      if( dhtErrors>=4 ){
-        System.reset();
       }
     }
     boolean dhtExpired(){ // Checks for button use.
@@ -313,16 +301,9 @@
       inUseDht = false;
     }
   // Light Timer
-    void lightTimer1Ctrl(){
+    void lightTimerCtrl(){
       if( lightsExpire ){
-        lightTimer2.stop();
-        lightTimer1.start();
-      }
-    }
-    void lightTimer2Ctrl(){
-      if( lightsExpire ){
-        lightTimer1.stop();
-        lightTimer2.start();
+        lightTimer.start();
       }
     }
     void lightTimerHandler(){
