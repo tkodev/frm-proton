@@ -1,4 +1,4 @@
-# Proton Smart Light Switch
+# Proton Smart Light Switch 
 [![ScreenShot](http://www.htko.ca/wp-content/uploads/2016/04/Youtube-button.png)](https://youtu.be/7FFnYyeRKBw)
 - "Proton" is a smart in wall light switch / temp sensor / door sensor / IR blaster / garage door opener. Based on the Particle Photon (cloud arduino device).
 - The project is split into three sections:
