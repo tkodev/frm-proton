@@ -7,9 +7,15 @@
       const String dName = "Proton";
       const String dNamel = htko.lowcap(dName);
       const int ON = 1; const int OFF = 0;
+<<<<<<< HEAD
     // Pin Constants  Match index for lights to button
       const int inputs[5] = {D6,A0,A1,D7,A4}; // 0 = DHT, 1&2 = Button, 3 = Door, 4  IR Capture
       const int outputs[5] = {0,A2,A3,D2,A5}; // 0 = RGB, 1&2 = Lights, 3 = Garage Door, 4  Null, IR LED (reverse with capture soon)
+=======
+    // Pin Constants - Match index for lights to button
+      const int inputs[5] = {D6,A0,A1,D7,A4}; // 0 = DHT, 1&2 = Button, 3 = Door, 4 - IR Capture
+      const int outputs[5] = {0,A2,A3,D2,A5}; // 0 = RGB, 1&2 = Lights, 3 = Garage Door, 4 - Null, IR LED (reverse with capture soon)
+>>>>>>> experimental
   // Controllers
     // Lights & Buttons
       retained int outStates[4] = {OFF,OFF,ON}; // RGB, L1, L2. 0 to 2 (lights)
@@ -29,9 +35,12 @@
       Timer dhtUseTimer(2500, dhtUseTimerHandler, true);
       volatile boolean inUseDht = false;
     // Light
+<<<<<<< HEAD
       const int shortTimer = 600000;
       const int longTimer = 600000;
       Timer lightTimer(600000, lightTimerHandler, true);
+=======
+>>>>>>> experimental
   // Notes
     // Drill Hole for IR
     // See resistor for IR
@@ -81,9 +90,12 @@
         }else if( (cmd==0)||(cmd==1) ){
           outStates[i] = cmd;
         }
+<<<<<<< HEAD
         if( outStates[i]==ON ){
           lightTimerCtrl();
         }
+=======
+>>>>>>> experimental
         digitalWrite(outputs[i], !outStates[i]);
       }
     }
@@ -247,11 +259,15 @@
         cmdParse("light.toggle.2","button",dNamel,false);
       }
       if( newStates[3]!=oldStates[3] ){
+<<<<<<< HEAD
         if( newStates[3] ){ // is door open?
           lightTimer.changePeriod(shortTimer);
         }else{
           lightTimer.changePeriod(longTimer);
         }
+=======
+        cmdParse("light.toggle.1","door",dNamel,true);
+>>>>>>> experimental
       }
     }
   // Cloud Event / Function
@@ -280,9 +296,12 @@
       inUseDht = false;
     }
   // Light Timer
+<<<<<<< HEAD
   void lightTimerCtrl(){
       lightTimer.start();
     }
     void lightTimerHandler(){
       cmdParse("light.off.all","timer",dNamel,true);
     }
+=======
+>>>>>>> experimental
