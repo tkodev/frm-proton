@@ -7,8 +7,6 @@
       const String dName = "Proton";
       const String dNamel = htko.lowcap(dName);
       const int ON = 1; const int OFF = 0;
-      Timer initTimer(100, initHandler, true);
-      volatile boolean init = false;
     // Pin Constants - Match index for lights to button
       const int inputs[5] = {D6,A0,A1,D7,A4}; // 0 = DHT, 1&2 = Button, 3 = Door, 4 - IR Capture
       const int outputs[5] = {0,A2,A3,D2,A5}; // 0 = RGB, 1&2 = Lights, 3 = Garage Door, 4 - Null, IR LED (reverse with capture soon)
@@ -29,11 +27,8 @@
   // Timers and Handlers
     // DHT
       Timer dhtUseTimer(2500, dhtUseTimerHandler, true);
-      Timer dhtDaemonTimer(60000, dhtDaemon, false);
       volatile boolean inUseDht = false;
     // Light
-      Timer lightTimer(900000, lightTimerHandler, true);
-      volatile boolean lightsExpire = true;
   // Notes
     // Drill Hole for IR
     // See resistor for IR
@@ -56,7 +51,6 @@
           pinMode(outputs[3], OUTPUT); // Garage
           pinMode(outputs[4], OUTPUT); // IR LED
       // Handlers
-          dhtDaemonTimer.start();
         // Cloud
           boolean regCloudFunc = Particle.function("cloudFunc", cloudFuncHandler);
       // Initial Commands
@@ -68,8 +62,7 @@
       // Final Initialization
         // Event
           delay(2500);
-          initTimer.start();
-          Particle.publish(dName, "Status: Loop. Cloud Func: "+htko.strBool2(regCloudFunc)+", Light Timer: "+htko.cap(htko.strBool(lightsExpire)), 60, PRIVATE);
+          Particle.publish(dName, "Status: Loop. Cloud Func: "+htko.strBool2(regCloudFunc), 60, PRIVATE);
     }
   // Loop
     void loop(){
@@ -86,9 +79,6 @@
           outStates[i] = cmd;
         }
         digitalWrite(outputs[i], !outStates[i]);
-        if( outStates[i]==ON ){
-          lightTimerCtrl();
-        }
       }
     }
     void rgbCtrl(int cmd){
@@ -233,10 +223,6 @@
       uint32_t freemem = System.freeMemory();
       Particle.publish(dName, "Status: Reset. Memory: "+String(freemem)+" Bytes", 60, PRIVATE);
     }
-    void initHandler(){ // Toggle pins 1
-      init = true;
-      Particle.publish(dName, "Status: Init. Memory: "+String(System.freeMemory())+" Bytes", 60, PRIVATE);
-    }
   // Buttons
     void btnHandler(){
       for (int i=1; i <= 3; i++){
@@ -244,16 +230,14 @@
         newStates[i] = digitalRead(inputs[i]);
       }
       Particle.process();
-      if( init ){
-        if( newStates[1]>oldStates[1] ){
-          cmdParse("light.toggle.1","button",dNamel,false);
-        }
-        if( newStates[2]>oldStates[2] ){
-          cmdParse("light.toggle.2","button",dNamel,false);
-        }
-        if( newStates[3]!=oldStates[3] ){
-          cmdParse("light.toggle.1","door",dNamel,true);
-        }
+      if( newStates[1]>oldStates[1] ){
+        cmdParse("light.toggle.1","button",dNamel,false);
+      }
+      if( newStates[2]>oldStates[2] ){
+        cmdParse("light.toggle.2","button",dNamel,false);
+      }
+      if( newStates[3]!=oldStates[3] ){
+        cmdParse("light.toggle.1","door",dNamel,true);
       }
     }
   // Cloud Event / Function
@@ -269,25 +253,6 @@
         return result;
     }
   // DHT Timers
-    void dhtDaemon(){
-      if( dhtExpired() ){
-        int result = DHT.acquireAndWait(0);
-        String status = DHT.resultStr(result);
-        if( status=="OK" ){
-          int temp = DHT.getCelsius();
-          int humid = DHT.getHumidity();
-          if( temp>=maxTemp ){
-            Particle.publish(dName, "Overheating Alert! Status: "+String(temp)+"°C, "+String(humid)+"%", 60, PRIVATE);
-          }
-        }else{
-          Particle.publish(dName, status, 60, PRIVATE);
-        }
-        int freemem = System.freeMemory();
-        if( freemem<10000 ){
-          Particle.publish(dName, "Memory Low Alert! Memory: "+String(freemem)+" Bytes.", 60, PRIVATE);
-        }
-      }
-    }
     boolean dhtExpired(){ // Checks for button use.
       dhtUseTimer.start();
       if( inUseDht ){
@@ -301,11 +266,3 @@
       inUseDht = false;
     }
   // Light Timer
-    void lightTimerCtrl(){
-      if( lightsExpire ){
-        lightTimer.start();
-      }
-    }
-    void lightTimerHandler(){
-      cmdParse("light.off.all","timer",dNamel,true);
-    }
