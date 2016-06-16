@@ -7,9 +7,9 @@
       const String dName = "Proton";
       const String dNamel = htko.lowcap(dName);
       const int ON = 1; const int OFF = 0;
-    // Pin Constants - Match index for lights to button
-      const int inputs[5] = {D6,A0,A1,D7,A4}; // 0 = DHT, 1&2 = Button, 3 = Door, 4 - IR Capture
-      const int outputs[5] = {0,A2,A3,D2,A5}; // 0 = RGB, 1&2 = Lights, 3 = Garage Door, 4 - Null, IR LED (reverse with capture soon)
+    // Pin Constants  Match index for lights to button
+      const int inputs[5] = {D6,A0,A1,D7,A4}; // 0 = DHT, 1&2 = Button, 3 = Door, 4  IR Capture
+      const int outputs[5] = {0,A2,A3,D2,A5}; // 0 = RGB, 1&2 = Lights, 3 = Garage Door, 4  Null, IR LED (reverse with capture soon)
   // Controllers
     // Lights & Buttons
       retained int outStates[4] = {OFF,OFF,ON}; // RGB, L1, L2. 0 to 2 (lights)
@@ -19,7 +19,7 @@
       #include "lib_PietteTech_DHT.h"
       void dht_wrapper(); // must be declared before the lib initialization
       PietteTech_DHT DHT(inputs[0], 22, dht_wrapper); // Lib instantiate
-      void dht_wrapper() { DHT.isrCallback(); } // This wrapper is in charge of calling - must be defined like this for the lib work
+      void dht_wrapper() { DHT.isrCallback(); } // This wrapper is in charge of calling  must be defined like this for the lib work
       const int maxTemp = 45;
     // IR
       #include "lib_IRremote.h"
@@ -29,6 +29,9 @@
       Timer dhtUseTimer(2500, dhtUseTimerHandler, true);
       volatile boolean inUseDht = false;
     // Light
+      const int shortTimer = 600000;
+      const int longTimer = 600000;
+      Timer lightTimer(600000, lightTimerHandler, true);
   // Notes
     // Drill Hole for IR
     // See resistor for IR
@@ -77,6 +80,9 @@
           outStates[i] = !outStates[i];
         }else if( (cmd==0)||(cmd==1) ){
           outStates[i] = cmd;
+        }
+        if( outStates[i]==ON ){
+          lightTimerCtrl();
         }
         digitalWrite(outputs[i], !outStates[i]);
       }
@@ -132,7 +138,11 @@
         if( status=="OK" ){
           int temp = DHT.getCelsius();
           int humid = DHT.getHumidity();
-          Particle.publish(dName, "Status: "+String(temp)+"°C, "+String(humid)+"%", 60, PRIVATE);
+          if( temp>=maxTemp ){
+            Particle.publish(dName, "Overheating Alert! Status: "+String(temp)+"°C, "+String(humid)+"%", 60, PRIVATE);
+          }else{
+            Particle.publish(dName, "Status: "+String(temp)+"°C, "+String(humid)+"%", 60, PRIVATE);
+          }
         }else{
           Particle.publish(dName, status, 60, PRIVATE);
         }
@@ -173,10 +183,10 @@
       // Parse Command
         if( cmd1==1 ){ // Lights
           if( (cmd2==0)||(cmd2==1)||(cmd2==2) ){ // Command Selection
-            if( (cmd3==0) ){ // Light Selection - RGB
+            if( (cmd3==0) ){ // Light Selection  RGB
               rgbCtrl(cmd2);
               result = true; status = htko.strDigit(cmd2);
-            }else if( (cmd3==1)||(cmd3==2) ){ // Light Selection - 1 or 2
+            }else if( (cmd3==1)||(cmd3==2) ){ // Light Selection  1 or 2
               lightCtrl(cmd2,cmd3);
               result = true; status = htko.strDigit(cmd2);
             }else if( (cmd3==3)&&(cmd2!=2) ){ // all & not toggle
@@ -237,7 +247,11 @@
         cmdParse("light.toggle.2","button",dNamel,false);
       }
       if( newStates[3]!=oldStates[3] ){
-        cmdParse("light.toggle.1","door",dNamel,true);
+        if( newStates[3] ){ // is door open?
+          lightTimer.changePeriod(shortTimer);
+        }else{
+          lightTimer.changePeriod(longTimer);
+        }
       }
     }
   // Cloud Event / Function
@@ -266,3 +280,9 @@
       inUseDht = false;
     }
   // Light Timer
+  void lightTimerCtrl(){
+      lightTimer.start();
+    }
+    void lightTimerHandler(){
+      cmdParse("light.off.all","timer",dNamel,true);
+    }
