@@ -8,11 +8,19 @@ Misc HTKO functions
 htko::htko(int woo){
   // This is where the constructor would be...right now we are too stupid to have one
 }
+
 String htko::strDigit(int inputInt){
   return ( inputInt ? "on" : "off" );
 }
+
 String htko::strBool(boolean inputBool){
-  return ( inputBool ? "on" : "off" );
+  String result = "";
+  if( inputBool<=1 ){
+    result = ( inputBool ? "On" : "Off" );
+  }else if( inputBool==2 ){
+    result = "Toggled";
+  }
+  return result;
 }
 String htko::strBool2(boolean inputBool){
   return ( inputBool ? "Success" : "Failed" );
