@@ -1,0 +1,5 @@
+build didn't produce binary Error: Command failed: /tmp/ccMhkNHw.ltrans26.ltrans.o: In function `__static_initialization_and_destruction_0':
+/spark/compile_service/shared/workspace/0_core__24_1/firmware/main/a4fdb2c0d78db54327b0938e2b89a50dcbcc8c023c1eb8e8cf1ceede8857/IRremote.cpp:3: undefined reference to `IRsend::IRsend(int)'
+collect2: error: ld returned 1 exit status
+make[1]: *** [/spark/compile_service/shared/workspace/0_core__24_1/firmware/main/a4fdb2c0d78db54327b0938e2b89a50dcbcc8c023c1eb8e8cf1ceede8857/a4fdb2c0d78db54327b0938e2b89a50dcbcc8c023c1eb8e8cf1ceede8857.elf] Error 1
+make: *** [main] Error 2

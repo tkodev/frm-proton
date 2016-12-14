@@ -1,0 +1,66 @@
+To do:
+	
+D7 - Reed Sensor D0-6 x1 0
+	use internal pull-up resistor 
+	requires ground
+
+D6 - DHT - D3 x1 (working on D2,4) #done -
+	0.) 1 2 - 4
+	1.) positive
+	2.) pin + (4.7k) pullup resistor
+	4.) negative
+	requires ground and 3v
+		use FLOAT or DOUBLE to store results
+		5v tolerant - must test
+
+A4 - IR LED Control D0-3 x1 #done 
+	IR LED
+		FV (V): 1.5~1.6
+		FC (mA): 60mA, 120mA peak for 10% Pulse Width
+		35ma at 100r
+		75ma at 47r
+		I used 22r
+	2N2222
+		flat side up:
+		3E-tognd 2B-topin 1C-positive in
+			To control a 5v LED at 100ma, use a 2kr base resistor
+				Value calculated with transistor calculator
+			what did I use?
+		requires ground to 5v
+A5 - Capture (with a transistor), A0-5/D0-6 x1 -
+	IR Receiver
+		FV (V): 1.1~1.4
+		FC (mA): 30 ma; 75 ma peak;
+	VS1838B (CMOS lvl digital signal - output matching TTL)
+		1-out 2-gnd 3-vcc
+		Vcc: 3-5
+		Hz: 38Hz
+		requires a digital input pin
+
+A2,3 Relay control - D0-6 x2 #Done 65
+	requires ground and 5v
+
+A0,1 - Two buttons w/ LEDs - D0-6 x2 #Done -
+	LED must run parallel to (200) pulldown resistor
+	requires ground and 5v
+
+Notes
+	20ma max a pin
+	gnd are connected
+	All pins except A3 and DAC are 5V tolerant (when not in analog mode). If used as a 5V input the pull-up/pull-down resistor must be disabled.
+
+	Analog pins can be used as Digital Pins too
+
+	D0-3 #2,3 = Analog output via PWM
+	A4-5 #4,5 = PWM Analog output
+
+optional - reed switch and remote for garage
+
+when led 
+
+a5 unable to attach interrupt
+
+future:
+	research mosfets / dimmer / optocouplers
+	experiment with pcb ordering
+	experiment wtih low level switching on led

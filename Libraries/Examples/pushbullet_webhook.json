@@ -1,0 +1,15 @@
+{
+  "eventName": "Proton",
+  "url": "https://api.pushbullet.com/v2/pushes",
+  "requestType": "POST",
+  "headers": {
+    "Authorization": "Bearer o.B5rwDDZNT6iiWCRJKhM2FCV3JgH250ea",
+    "Content-Type": "application/json"
+  },
+  "json": {
+      "type": "note",
+      "title": "Proton",
+      "body": "{{SPARK_EVENT_VALUE}}"
+  },
+  "mydevices": true
+}
