@@ -21,6 +21,7 @@ photo:
   - "fixture.png"
   - "fixture-back.png"
 link: "https://github.com/htko89/proton"
+version: "0.2.0"
 ---
 # Personal Project
 This is a custom built wifi enabled smart switch I’ve built for personal use. It also is connected to my garage door opener, and has a built in IR blaster. DHT 22 temperature sensor is also present to check for overheating.
