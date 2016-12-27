@@ -7,7 +7,6 @@ parent: "personal"
 topics:
   - "code"
 tools:
-  - "personal"
   - "C++"
   - "IoT"
   - "particle"
