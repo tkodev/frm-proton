@@ -2,18 +2,16 @@
 type: "folio"
 draft: false
 date: "2016-06-01"
-title: "Proton Smart Light Switch"
+title: "Proton Light Switch"
 parent: "personal"
 topics:
   - "code"
 tools:
   - "C++"
   - "IoT"
-  - "particle"
   - "photon"
   - "arduino"
-  - "smart"
-  - "infrared"
+  - "ir"
 cover: "cover.png"
 photo:
   - "wallplate.png"
