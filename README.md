@@ -11,7 +11,7 @@ tools:
   - "IoT"
   - "photon"
   - "arduino"
-  - "ir"
+  - "infrared"
 cover: "cover.png"
 photo:
   - "wallplate.png"
