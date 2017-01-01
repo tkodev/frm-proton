@@ -12,12 +12,13 @@ tools:
   - "photon"
   - "arduino"
   - "infrared"
-cover: "cover.png"
+cover: "cover.jpg"
 photo:
-  - "wallplate.png"
-  - "fixture.png"
-  - "fixture-back.png"
-link: "https://github.com/htko89/proton"
+  - "wallplate.jpg"
+  - "fixture.jpg"
+  - "fixture-back.jpg"
+link: "https://www.youtube.com/watch?v=7FFnYyeRKBw"
+code: "https://github.com/htko89/proton"
 version: "0.2.0"
 ---
 # Personal Project
@@ -31,6 +32,3 @@ This is a custom built wifi enabled smart switch I’ve built for personal use. 
 * IR Emitter: TSAL6100
 * IR Recorder: TSOP34438
 * Pseudo MVC approach: Event Assignment > Events > Action
-
-## Project Views:
-* Working Model (various views)
