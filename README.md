@@ -1,5 +1,5 @@
 ---
-type: "folio"
+type: "project"
 draft: false
 date: "2016-06-01"
 title: "Proton Light Switch"
