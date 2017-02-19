@@ -12,7 +12,7 @@ tools:
   - arduino
   - infrared
 link: 'https://www.youtube.com/watch?v=7FFnYyeRKBw'
-code: 'https://github.com/htko89/proton'
+code: 'https://github.com/htkoca/proton'
 version: 0.2.0
 photos:
   - wallplate.jpg
