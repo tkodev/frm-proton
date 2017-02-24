@@ -1,24 +1,21 @@
 ---
-type: project
-draft: false
-date: '2016-06-01'
 title: Proton Light Switch
-topics:
+date: '2016-06-01'
+link: 'https://www.youtube.com/watch?v=7FFnYyeRKBw'
+code: 'https://github.com/htkoca/proton'
+categories:
   - code
-tools:
+tags:
   - C++
   - IoT
   - photon
   - arduino
   - infrared
-link: 'https://www.youtube.com/watch?v=7FFnYyeRKBw'
-code: 'https://github.com/htkoca/proton'
-version: 0.2.0
+cover: cover.jpg
 photos:
   - wallplate.jpg
   - fixture.jpg
   - fixture-back.jpg
-path: code/personal/proton-light-switch
 ---
 # Personal Project
 This is a custom built wifi enabled smart switch I’ve built for personal use. It also is connected to my garage door opener, and has a built in IR blaster. DHT 22 temperature sensor is also present to check for overheating.
