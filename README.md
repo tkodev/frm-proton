@@ -12,7 +12,7 @@ tags:
   - arduino
   - infrared
 cover: cover.jpg
-photos:
+images:
   - wallplate.jpg
   - fixture.jpg
   - fixture-back.jpg
