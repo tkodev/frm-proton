@@ -3,7 +3,7 @@ layout: _pages/post
 title: Proton Light Switch
 date: '2016-06-01'
 link: 'https://www.youtube.com/watch?v=7FFnYyeRKBw'
-code: 'https://github.com/htkoca/proton'
+code: 'https://github.com/htkoca/iot-proton-switch'
 categories:
   - code
 tags:
